@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Класики — шкільна мінігра</title>
+<style>
+:root{--bg:#264d38;--chalk:#f7f1c7;--yellow:#ffd95a;--shadow:rgba(0,0,0,.28)}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:white}
+body{background:radial-gradient(circle at 20% 15%,rgba(255,255,255,.035),transparent 25%),radial-gradient(circle at 80% 70%,rgba(255,255,255,.03),transparent 30%),linear-gradient(135deg,#315c43,#1f4330);touch-action:manipulation}
+button,input{font:inherit}.screen{position:absolute;inset:0;display:none}.screen.active{display:flex}
+#startScreen,#gameOverScreen{align-items:center;justify-content:center;padding:24px;text-align:center}
+.card{width:min(92vw,680px);padding:28px;border:3px solid rgba(247,241,199,.8);border-radius:28px;background:rgba(0,0,0,.2);box-shadow:0 18px 50px var(--shadow)}
+h1{font-size:clamp(42px,9vw,76px);margin:0 0 8px;font-weight:900;letter-spacing:-2px}.subtitle{font-size:clamp(18px,4.5vw,26px);opacity:.88;margin-bottom:24px}
+.character-row{display:flex;gap:16px;justify-content:center;margin:18px 0 22px}.character{width:130px;height:130px;border:3px solid rgba(255,255,255,.28);border-radius:24px;background:rgba(255,255,255,.08);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer}
+.character .emoji{font-size:64px;line-height:1}.character span:last-child{margin-top:6px;font-weight:800}.character.selected{transform:scale(1.05);background:rgba(255,217,90,.18);border-color:var(--yellow)}
+.primary{border:0;border-radius:18px;padding:16px 28px;font-weight:900;font-size:22px;background:var(--yellow);color:#2e3728;box-shadow:0 8px 0 #c3a43c;cursor:pointer}.primary:active{transform:translateY(5px);box-shadow:0 3px 0 #c3a43c}.hint{font-size:14px;opacity:.72;margin-top:16px}
+#gameScreen{flex-direction:column}.hud{position:relative;z-index:30;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:10px 14px;background:rgba(0,0,0,.2);min-height:74px;border-bottom:2px solid rgba(247,241,199,.24)}
+.hud-left,.hud-right{display:flex;align-items:center;gap:12px}.hud-right{justify-content:flex-end}.level{font-weight:900;font-size:clamp(18px,4.5vw,28px)}.score{font-size:clamp(18px,4vw,26px);font-weight:800}.target-pill{background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.18);border-radius:999px;padding:8px 14px;font-weight:800}.lives{font-size:clamp(20px,5vw,32px);letter-spacing:2px;white-space:nowrap}.timer-wrap{position:absolute;left:0;right:0;bottom:0;height:5px;background:rgba(255,255,255,.09)}.timer{height:100%;width:100%;background:var(--yellow);transform-origin:left center}
+.game-area{position:relative;flex:1;min-height:0;overflow:hidden;padding:10px}.board{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);width:min(82vw,560px);height:calc(100% - 28px);display:grid;grid-template-columns:repeat(2,1fr);grid-auto-rows:1fr;gap:5px;z-index:10}
+.cell{position:relative;border:3px solid rgba(247,241,199,.95);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--chalk);font-size:clamp(24px,7vw,46px);font-weight:900;background:rgba(255,255,255,.025);cursor:pointer;user-select:none}.cell.single{grid-column:1 / 3;width:50%;justify-self:center}.cell.expected{background:rgba(255,217,90,.16);box-shadow:inset 0 0 0 4px rgba(255,217,90,.25)}.cell.wrong{animation:wrong .18s 2}@keyframes wrong{50%{background:rgba(255,80,80,.42)}}
+.runner{position:absolute;z-index:18;font-size:clamp(30px,8vw,54px);pointer-events:none;transition:left .16s ease,top .16s ease,transform .16s ease;transform:translate(-50%,-55%);filter:drop-shadow(0 6px 4px rgba(0,0,0,.3))}
+.flyer{position:absolute;z-index:16;font-size:clamp(28px,7vw,46px);pointer-events:auto;cursor:pointer;user-select:none;touch-action:manipulation;will-change:transform,left,top}.flyer.good{filter:drop-shadow(0 0 8px rgba(110,255,110,.7))}.flyer.bad{filter:drop-shadow(0 0 8px rgba(255,90,90,.6))}
+.flash{position:absolute;inset:0;pointer-events:none;z-index:40;opacity:0}.flash.good{background:rgba(80,255,120,.18)}.flash.bad{background:rgba(255,60,60,.2)}.flash.show{animation:flash .35s}@keyframes flash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}
+.level-banner{position:absolute;z-index:50;left:50%;top:48%;transform:translate(-50%,-50%) scale(.85);padding:18px 28px;border-radius:20px;background:rgba(0,0,0,.68);border:3px solid var(--chalk);font-size:clamp(28px,7vw,54px);font-weight:1000;opacity:0;pointer-events:none}.level-banner.show{animation:banner 1.05s ease}@keyframes banner{0%{opacity:0;transform:translate(-50%,-50%) scale(.7)}20%,75%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0}}
+#nameInput{width:min(100%,420px);padding:14px 16px;border-radius:14px;border:2px solid rgba(255,255,255,.28);background:rgba(255,255,255,.1);color:#fff;font-size:20px;outline:none;margin:10px 0 16px;text-align:center}#nameInput::placeholder{color:rgba(255,255,255,.55)}.result{font-size:clamp(26px,6vw,44px);font-weight:900;margin:12px 0}.small{opacity:.75;font-size:15px}
+@media (min-width:800px){.game-area{padding:18px}.board{width:min(48vw,560px)}}
+
+.level-intro{position:absolute;inset:0;z-index:80;display:none;align-items:center;justify-content:center;background:rgba(18,40,29,.92);text-align:center;padding:24px}
+.level-intro.show{display:flex}
+.level-intro-card{width:min(90vw,560px);padding:30px 24px;border:3px solid var(--chalk);border-radius:28px;background:rgba(0,0,0,.22);box-shadow:0 18px 50px rgba(0,0,0,.32)}
+.level-intro-title{font-size:clamp(42px,10vw,72px);font-weight:1000;margin:0 0 12px}
+.level-intro-sub{font-size:clamp(18px,4vw,24px);opacity:.85;margin-bottom:22px}
+.countdown{font-size:clamp(76px,22vw,150px);font-weight:1000;line-height:1;min-height:1.05em;text-shadow:0 8px 0 rgba(0,0,0,.2)}
+.music-btn{position:absolute;right:10px;top:10px;z-index:90;border:2px solid rgba(255,255,255,.35);background:rgba(0,0,0,.25);color:#fff;border-radius:999px;padding:8px 11px;font-weight:800}
+
+
+.board{transition:transform .55s ease}
+.board.dir-up{transform:translateX(-50%) rotate(180deg)}
+.board.dir-up .cell{transform:rotate(180deg)}
+.board.diag-right{transform:translateX(-50%) rotate(18deg) scale(.9)}
+.board.diag-right .cell{transform:rotate(-18deg)}
+.board.diag-left{transform:translateX(-50%) rotate(-18deg) scale(.9)}
+.board.diag-left .cell{transform:rotate(18deg)}
+.board.horizontal-right{transform:translateX(-50%) rotate(90deg) scale(.82)}
+.board.horizontal-right .cell{transform:rotate(-90deg)}
+.board.horizontal-left{transform:translateX(-50%) rotate(-90deg) scale(.82)}
+.board.horizontal-left .cell{transform:rotate(90deg)}
+.board.wave{transform:translateX(-50%) scale(.92)}
+.board.wave .cell{transition:transform .45s ease}
+
+.boss-screen{position:absolute;inset:0;z-index:75;display:none;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,rgba(122,32,32,.38),rgba(10,20,14,.96) 68%);padding:18px;text-align:center;overflow:hidden}
+.boss-screen.show{display:flex}
+.boss-card{width:min(92vw,680px);position:relative}
+.boss-title{font-size:clamp(30px,8vw,64px);font-weight:1000;text-transform:uppercase;letter-spacing:1px;text-shadow:0 6px 0 rgba(0,0,0,.3);margin-bottom:8px}
+.boss-sub{font-size:clamp(17px,4vw,24px);opacity:.88;margin-bottom:10px}
+.boss-timer{font-size:clamp(30px,8vw,54px);font-weight:1000;margin:4px 0 10px}
+.boss-target{position:relative;margin:8px auto;width:min(72vw,360px);height:min(72vw,360px);display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;touch-action:manipulation}
+.boss-figure{font-size:clamp(150px,42vw,310px);line-height:1;filter:drop-shadow(0 14px 8px rgba(0,0,0,.35));transform-origin:center}
+.boss-eye{position:absolute;left:50%;top:35%;transform:translate(-50%,-50%);width:72px;height:72px;border-radius:50%;background:#d51919;box-shadow:0 0 24px #ff2a2a,0 0 52px rgba(255,0,0,.7);border:7px solid #4a0000}
+.boss-eye:after{content:"";position:absolute;width:22px;height:22px;border-radius:50%;background:#111;left:50%;top:50%;transform:translate(-50%,-50%)}
+.boss-counter{font-size:clamp(24px,6vw,40px);font-weight:900;margin-top:4px}
+.boss-hit{animation:bossHit .14s}
+@keyframes bossHit{50%{transform:scale(.9) rotate(-2deg);filter:brightness(1.6) drop-shadow(0 0 20px rgba(255,255,255,.7))}}
+.boss-enter .boss-figure{animation:bossEnter .95s cubic-bezier(.15,.8,.25,1)}
+@keyframes bossEnter{0%{transform:translateY(-120vh) rotate(-14deg) scale(.25);opacity:0}70%{transform:translateY(24px) rotate(3deg) scale(1.08);opacity:1}100%{transform:none;opacity:1}}
+.boss-defeat .boss-figure{animation:bossDefeat 1.2s ease-in forwards}
+@keyframes bossDefeat{0%{transform:scale(1);opacity:1}35%{transform:scale(1.22) rotate(8deg)}100%{transform:translateY(110vh) rotate(38deg) scale(.4);opacity:0}}
+.boss-defeat .boss-eye{animation:eyeBoom .8s ease-out forwards}
+@keyframes eyeBoom{50%{transform:translate(-50%,-50%) scale(2.2);box-shadow:0 0 80px #ff0000}100%{transform:translate(-50%,-50%) scale(.1);opacity:0}}
+
+
+.media-strip{
+  position:absolute;left:0;right:0;top:0;z-index:65;
+  min-height:54px;padding:6px 10px;
+  display:flex;align-items:flex-start;justify-content:flex-end;gap:8px;
+  background:rgba(18,40,29,.96);
+  border-bottom:2px solid rgba(247,241,199,.22);
+}
+.media-strip .music-btn{
+  position:static;flex:0 0 auto;margin:0;
+}
+.yt-wrap{
+  width:180px;height:101px;flex:0 0 180px;
+}
+.yt-wrap iframe{display:block;width:180px;height:101px;border-radius:10px}
+.game-area.youtube-open .media-strip{min-height:113px}
+.game-area.youtube-open .board{
+  height:calc(100% - 142px);
+}
+.game-area.youtube-open .runner{
+  /* runner position is recalculated on each cell movement */
+}
+@media(max-width:520px){
+  .game-area.youtube-open .media-strip{min-height:113px}
+  .yt-wrap,.yt-wrap iframe{width:160px;height:90px}
+  .yt-wrap{flex-basis:160px}
+  .media-strip .music-btn{font-size:12px;padding:7px 9px;max-width:150px}
+  .game-area.youtube-open .board{height:calc(100% - 140px)}
+}
+
+</style>
+</head>
+<body>
+<section id="startScreen" class="screen active"><div class="card"><h1>КЛАСИКИ</h1><div class="subtitle">Натискай клітинки по черзі та дійди до 100 рівня</div><div>Обери персонажа:</div><div class="character-row"><button class="character selected" data-char="👧🎒"><span class="emoji">👧</span><span>Дівчинка 🎒</span></button><button class="character" data-char="👦🎒"><span class="emoji">👦</span><span>Хлопчик 🎒</span></button></div><button id="startBtn" class="primary">🔔 ПОЧАТИ</button><div class="hint">5 життів • +1 бал за кожну правильну клітинку • з 7 рівня з'являються предмети</div></div></section>
+<section id="gameScreen" class="screen"><div class="hud"><div class="hud-left"><div class="level" id="levelText">Рівень 1/100</div><div class="target-pill">Тисни: <span id="targetText">1</span></div></div><div class="lives" id="livesText">❤️❤️❤️❤️❤️</div><div class="hud-right"><div class="score">Бали: <span id="scoreText">0</span></div></div><div class="timer-wrap"><div class="timer" id="timerBar"></div></div></div><div class="game-area" id="gameArea"><div id="mediaStrip" class="media-strip"><button id="musicBtn" class="music-btn">🎵 Увімкнути «Випускний»</button><div id="ytWrap" class="yt-wrap" style="display:none"><iframe id="ytPlayer" width="180" height="101" src="https://www.youtube.com/embed/fw9S_p2eR5Q?enablejsapi=1&playsinline=1" title="Скрябін — Випускний" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div></div><div class="board" id="board"></div><div class="runner" id="runner">👧🎒</div><div class="flash good" id="goodFlash"></div><div class="flash bad" id="badFlash"></div><div class="level-banner" id="levelBanner">Рівень 1/100</div><div id="levelIntro" class="level-intro"><div class="level-intro-card"><div id="introLevel" class="level-intro-title">Рівень 1</div><div class="level-intro-sub">Приготуйся до класиків</div><div id="countdown" class="countdown">🔔</div><button id="levelStartBtn" class="primary">СТАРТ</button></div></div>
+<div id="bossScreen" class="boss-screen"><div class="boss-card"><div id="bossTitle" class="boss-title">МЕГА-БОС</div><div id="bossSub" class="boss-sub"></div><div id="bossTimer" class="boss-timer">60</div><div id="bossTarget" class="boss-target"><div id="bossFigure" class="boss-figure">👨‍🏫</div><div id="bossEye" class="boss-eye" style="display:none"></div></div><div id="bossCounter" class="boss-counter">0 / 50</div></div></div>
+</div></section>
+<section id="gameOverScreen" class="screen"><div class="card"><h1 id="gameOverTitle">ГРУ ЗАВЕРШЕНО</h1><div class="result">Твій результат: <span id="finalScore">0</span> балів</div><input id="nameInput" maxlength="24" placeholder="Введи ім'я"><div id="namedResult" class="subtitle" style="margin:4px 0 18px"></div><button id="saveNameBtn" class="primary">ЗБЕРЕГТИ РЕЗУЛЬТАТ</button><div style="height:12px"></div><button id="restartBtn" class="primary">ЗІГРАТИ ЩЕ РАЗ</button><div class="small" style="margin-top:16px">Результат зберігається на цьому пристрої.</div></div></section>
+<script>
+(() => {
+const $=s=>document.querySelector(s), startScreen=$('#startScreen'), gameScreen=$('#gameScreen'), gameOverScreen=$('#gameOverScreen'), board=$('#board'), runner=$('#runner'), gameArea=$('#gameArea'), levelText=$('#levelText'), targetText=$('#targetText'), scoreText=$('#scoreText'), livesText=$('#livesText'), timerBar=$('#timerBar'), levelBanner=$('#levelBanner'), goodFlash=$('#goodFlash'), badFlash=$('#badFlash'), levelIntro=$('#levelIntro'), introLevel=$('#introLevel'), countdown=$('#countdown'), levelStartBtn=$('#levelStartBtn'), musicBtn=$('#musicBtn'), bossScreen=$('#bossScreen'), bossTitle=$('#bossTitle'), bossSub=$('#bossSub'), bossTimer=$('#bossTimer'), bossTarget=$('#bossTarget'), bossFigure=$('#bossFigure'), bossEye=$('#bossEye'), bossCounter=$('#bossCounter');
+let selectedChar='👧🎒', level=1, score=0, lives=5, expected=1, maxCell=10, running=false, deadline=0, raf=0, flyers=[], flyerTimer=0, lastFrame=0, invulnerableUntil=0, audioCtx=null, musicTimer=null, musicOn=true, bossActive=false, bossHits=0, bossNeed=0, bossEnd=0, bossRaf=0;
+document.querySelectorAll('.character').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.character').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');selectedChar=btn.dataset.char}));
+$('#startBtn').addEventListener('click',startGame);$('#restartBtn').addEventListener('click',()=>{gameOverScreen.classList.remove('active');startScreen.classList.add('active')});$('#saveNameBtn').addEventListener('click',saveName);levelStartBtn.addEventListener('click',beginCountdown);musicBtn.addEventListener('click',toggleGraduation);
+bossTarget.addEventListener('pointerdown',(ev)=>{
+  if(!bossActive)return;
+  const cfg=bosses[level];
+  if(cfg.eye){
+    const r=bossEye.getBoundingClientRect();
+    if(ev.clientX<r.left||ev.clientX>r.right||ev.clientY<r.top||ev.clientY>r.bottom)return;
+  }
+  ev.preventDefault();ev.stopPropagation();
+  bossHits++;score++;scoreText.textContent=score;
+  bossCounter.textContent=`${bossHits} / ${bossNeed}`;
+  bossFigure.classList.remove('boss-hit');void bossFigure.offsetWidth;bossFigure.classList.add('boss-hit');
+  playBossHit();
+  if(bossHits>=bossNeed)bossDefeated();
+});
+function showScreen(screen){[startScreen,gameScreen,gameOverScreen].forEach(s=>s.classList.remove('active'));screen.classList.add('active')}
+function boardSizeForLevel(lvl){return lvl>=18?15:10}
+const bosses={
+  10:{title:'МЕГА-БОС: ТРУДОВИК',figure:'👨‍🏫',need:50,sub:'50 кліків за 60 секунд'},
+  16:{title:'БОС: СТАРШИЙ ВЧИТЕЛЬ',figure:'👩‍🏫',need:70,sub:'70 кліків за 60 секунд'},
+  23:{title:'МЕГА-БОС: ЗАВУЧ',figure:'👩‍💼',need:80,sub:'80 кліків за 60 секунд'},
+  25:{title:'СУПЕР-МЕГА БОС: ДИРЕКТОР',figure:'👨‍💼',need:80,sub:'80 кліків по червоному оку за 60 секунд',eye:true}
+};
+function isBossLevel(lvl){return !!bosses[lvl]}
+let levelDirection='down', levelLayout='normal';
+
+function chooseLevelLayout(){
+  levelLayout='normal'; levelDirection='down';
+
+  if(level>=5 && level<10){
+    levelDirection=Math.random()<.5?'down':'up';
+  }else if(level>10 && level<18){
+    const choices=['normal','diag-right','diag-left'];
+    levelLayout=choices[Math.floor(Math.random()*choices.length)];
+    levelDirection=Math.random()<.5?'down':'up';
+  }else if(level>=18 && level<20){
+    levelLayout='normal'; levelDirection='down';
+  }else if(level>=20 && level<25){
+    levelLayout='normal'; levelDirection=Math.random()<.5?'down':'up';
+  }else if(level>25 && level<30){
+    const choices=['normal','horizontal-right','horizontal-left'];
+    levelLayout=choices[Math.floor(Math.random()*choices.length)];
+    levelDirection=Math.random()<.5?'down':'up';
+  }else if(level>=30 && level<35){
+    const choices=['normal','diag-right','diag-left','horizontal-right','horizontal-left'];
+    levelLayout=choices[Math.floor(Math.random()*choices.length)];
+    levelDirection=Math.random()<.5?'down':'up';
+  }else if(level>=35){
+    levelLayout='wave';
+    levelDirection=Math.random()<.5?'down':'up';
+  }
+}
+function sequenceStart(){return levelDirection==='up'?maxCell:1}
+function sequenceDone(){return levelDirection==='up'?expected<1:expected>maxCell}
+function nextExpected(){expected += levelDirection==='up'?-1:1}
+
+function applyBoardLayout(){
+  board.classList.remove('dir-up','diag-right','diag-left','horizontal-right','horizontal-left','wave');
+  if(levelDirection==='up' && levelLayout==='normal') board.classList.add('dir-up');
+  if(levelLayout!=='normal') board.classList.add(levelLayout);
+
+  // Keep numbers upright when the traversal direction is reversed.
+  if(levelDirection==='up' && levelLayout!=='normal'){
+    board.querySelectorAll('.cell').forEach(c=>{
+      const base = levelLayout==='diag-right' ? 'rotate(-18deg)' :
+                   levelLayout==='diag-left' ? 'rotate(18deg)' :
+                   levelLayout==='horizontal-right' ? 'rotate(-90deg)' :
+                   levelLayout==='horizontal-left' ? 'rotate(90deg)' : '';
+      c.style.transform=base+' rotate(180deg)';
+    });
+  }else{
+    board.querySelectorAll('.cell').forEach(c=>c.style.transform='');
+  }
+
+  if(levelLayout==='wave'){
+    [...board.querySelectorAll('.cell')].forEach((c,i)=>{
+      const x=Math.sin(i*1.15)*34;
+      const r=Math.sin(i*.72)*8;
+      c.style.transform=`translateX(${x}px) rotate(${r}deg)`;
+    });
+  }
+}
+
+function stepTimeMs(){return Math.max(900,3200*Math.pow(0.987,level-1))}
+function objectSpeedPxPerSec(){return 20*Math.pow(1.0042,level-7)}
+function startGame(){
+  level=1;score=0;lives=5;expected=1;running=false;flyers=[];
+  maxCell=boardSizeForLevel(level);chooseLevelLayout();runner.textContent=selectedChar;showScreen(gameScreen);
+  initAudio();buildBoard();updateHUD();prepareLevel();
+}
+function buildBoard(){board.innerHTML='';const pairMap=new Set();if(maxCell===10)[2,3,5,6,8,9].forEach(n=>pairMap.add(n));else if(maxCell===15)[2,3,5,6,8,9,11,12,14,15].forEach(n=>pairMap.add(n));else [2,3,5,6,8,9,11,12,14,15,17,18,19,20].forEach(n=>pairMap.add(n));let n=1;while(n<=maxCell){if(pairMap.has(n)&&pairMap.has(n+1)){board.append(makeCell(n,false),makeCell(n+1,false));n+=2}else{board.append(makeCell(n,true));n++}}applyBoardLayout();expected=sequenceStart();markExpected();requestAnimationFrame(()=>moveRunnerToCell(expected,false))}
+function makeCell(n,single){const el=document.createElement('button');el.className='cell'+(single?' single':'');el.dataset.n=n;el.textContent=n;el.addEventListener('click',()=>tapCell(n,el));return el}
+function tapCell(n,el){
+  if(!running||bossActive)return;
+  if(n!==expected){el.classList.add('wrong');setTimeout(()=>el.classList.remove('wrong'),380);return}
+  score++;moveRunnerToCell(n,true);nextExpected();
+  if(sequenceDone())completeLevel();
+  else{setDeadline();markExpected();updateHUD()}
+}
+function completeLevel(){
+  running=false;
+  flyers.forEach(f=>f.el.remove());flyers=[];
+  if(level>=100){endGame(true);return}
+  level++;expected=1;
+  const newSize=boardSizeForLevel(level);
+  if(newSize!==maxCell){maxCell=newSize;buildBoard()}else{markExpected();moveRunnerToCell(1,false)}
+  updateHUD();prepareLevel();
+}
+
+function prepareLevel(){
+  running=false;bossActive=false;cancelAnimationFrame(raf);cancelAnimationFrame(bossRaf);
+  if(isBossLevel(level)){
+    levelIntro.classList.remove('show');
+    startBossIntro();
+    return;
+  }
+  introLevel.textContent=`Рівень ${level} / 100`;
+  const layoutNames={normal:'Класичне поле','diag-right':'Діагональ ↗','diag-left':'Діагональ ↖','horizontal-right':'Горизонталь →','horizontal-left':'Горизонталь ←','wave':'Хвиля 〰️'};
+  const dirName=levelDirection==='up'?'Початок знизу':'Початок зверху';
+  document.querySelector('.level-intro-sub').textContent=`${layoutNames[levelLayout]} • ${dirName}`;
+  countdown.textContent='🔔';
+  levelStartBtn.style.display='inline-block';
+  levelStartBtn.textContent=`СТАРТ — РІВЕНЬ ${level}`;
+  levelIntro.classList.add('show');
+  timerBar.style.transform='scaleX(1)';
+  playSchoolBell();
+}
+function wait(ms){return new Promise(r=>setTimeout(r,ms))}
+async function beginCountdown(){
+  levelStartBtn.style.display='none';
+  playSchoolBell();
+  await wait(450);
+  for(const x of ['3','2','1']){
+    countdown.textContent=x; playCountBeep(x==='1'?760:620); await wait(720);
+  }
+  countdown.textContent='СТАРТ!'; playCountBeep(980); await wait(620);
+  levelIntro.classList.remove('show');
+  expected=sequenceStart();markExpected();moveRunnerToCell(expected,false);updateHUD();
+  setDeadline();running=true;lastFrame=performance.now();flyerTimer=lastFrame;raf=requestAnimationFrame(loop);
+}
+
+function setDeadline(){deadline=performance.now()+stepTimeMs()}
+function markExpected(){document.querySelectorAll('.cell').forEach(c=>c.classList.toggle('expected',Number(c.dataset.n)===expected))}
+function moveRunnerToCell(n,pop){const c=board.querySelector(`[data-n="${n}"]`);if(!c)return;const ar=gameArea.getBoundingClientRect(),cr=c.getBoundingClientRect();runner.style.left=(cr.left-ar.left+cr.width/2)+'px';runner.style.top=(cr.top-ar.top+cr.height/2)+'px';if(pop){runner.style.transform='translate(-50%,-55%) scale(1.18)';setTimeout(()=>runner.style.transform='translate(-50%,-55%) scale(1)',120)}}
+function updateHUD(){levelText.textContent=`Рівень ${level}/100`;targetText.textContent=expected;scoreText.textContent=score;livesText.textContent='❤️'.repeat(Math.max(0,lives))+'🖤'.repeat(Math.max(0,5-lives))}
+function showLevelBanner(){levelBanner.textContent=`Рівень ${level}/100`;levelBanner.classList.remove('show');void levelBanner.offsetWidth;levelBanner.classList.add('show')}
+function loseLife(){if(performance.now()<invulnerableUntil||!running)return;lives--;invulnerableUntil=performance.now()+550;flash(badFlash);if(navigator.vibrate)navigator.vibrate(70);updateHUD();if(lives<=0)endGame(false)}
+function gainLife(){if(!running)return;lives=Math.min(5,lives+1);flash(goodFlash);if(navigator.vibrate)navigator.vibrate(35);updateHUD()}
+function flash(el){el.classList.remove('show');void el.offsetWidth;el.classList.add('show')}
+function loop(t){if(!running)return;const dt=Math.min(.04,(t-lastFrame)/1000);lastFrame=t;const remain=Math.max(0,(deadline-t)/stepTimeMs());timerBar.style.transform=`scaleX(${remain})`;if(t>=deadline){loseLife();if(!running)return;expected=sequenceStart();markExpected();updateHUD();setDeadline();moveRunnerToCell(expected,false)}if(level>=7){
+  const maxFlyers=Math.min(12,3+(level-7));
+  const interval=Math.max(520,1700-(level-7)*14);
+  if(flyers.length<maxFlyers && t-flyerTimer>interval){spawnFlyer();flyerTimer=t}
+  updateFlyers(dt);checkCollisions()
+}raf=requestAnimationFrame(loop)}
+const itemDefs=[{icon:'🌭',good:true,dir:'h'},{icon:'🪢',good:true,dir:'v'},{icon:'🔔',good:false,dir:'h'},{icon:'🍮',good:false,dir:'v'},{icon:'📚',good:false,dir:'d'},{icon:'📏',good:false,dir:'d2'}];
+function spawnFlyer(){
+  const def=itemDefs[Math.floor(Math.random()*itemDefs.length)],el=document.createElement('div');
+  el.className='flyer '+(def.good?'good':'bad');el.textContent=def.icon;gameArea.appendChild(el);
+  const collect=(ev)=>{
+    ev.preventDefault();ev.stopPropagation();
+    const f=flyers.find(x=>x.el===el);
+    if(!f||f.hit||!running)return;
+    f.hit=true;
+    if(def.good)gainLife();else loseLife();
+    el.remove();
+  };
+  el.addEventListener('pointerdown',collect,{passive:false});
+const W=gameArea.clientWidth,H=gameArea.clientHeight,s=objectSpeedPxPerSec();let x,y,vx=0,vy=0;if(def.dir==='h'){x=-60;y=70+Math.random()*(H-140);vx=s}else if(def.dir==='v'){x=40+Math.random()*(W-80);y=-60;vy=s}else if(def.dir==='d'){x=-60;y=30+Math.random()*H*.35;vx=s*.78;vy=s*.78}else{x=W+60;y=30+Math.random()*H*.35;vx=-s*.78;vy=s*.78}flyers.push({el,def,x,y,vx,vy,hit:false})}
+function updateFlyers(dt){const W=gameArea.clientWidth,H=gameArea.clientHeight;flyers.forEach(f=>{f.x+=f.vx*dt;f.y+=f.vy*dt;f.el.style.transform=`translate(${f.x}px,${f.y}px) rotate(${(f.x+f.y)*.08}deg)`});flyers=flyers.filter(f=>{const alive=f.x>-120&&f.x<W+120&&f.y>-120&&f.y<H+120&&!f.hit;if(!alive)f.el.remove();return alive})}
+function checkCollisions(){const rr=runner.getBoundingClientRect(),r={left:rr.left+rr.width*.18,right:rr.right-rr.width*.18,top:rr.top+rr.height*.18,bottom:rr.bottom-rr.height*.12};flyers.forEach(f=>{if(f.hit)return;const fr=f.el.getBoundingClientRect(),hit=!(fr.right<r.left||fr.left>r.right||fr.bottom<r.top||fr.top>r.bottom);if(hit){f.hit=true;if(f.def.good)gainLife();else loseLife();f.el.remove()}})}
+
+function startBossIntro(){
+  const cfg=bosses[level];
+  bossHits=0;bossNeed=cfg.need;bossActive=false;
+  bossTitle.textContent=cfg.title;bossSub.textContent=cfg.sub;
+  bossCounter.textContent=`0 / ${bossNeed}`;bossTimer.textContent='60';
+  bossFigure.textContent=cfg.figure;bossEye.style.display=cfg.eye?'block':'none';
+  bossScreen.classList.add('show','boss-enter');bossScreen.classList.remove('boss-defeat');
+  playBossAppear();
+  setTimeout(()=>{bossScreen.classList.remove('boss-enter');beginBoss()},1200);
+}
+function beginBoss(){
+  bossActive=true;bossEnd=performance.now()+60000;bossRaf=requestAnimationFrame(bossLoop);
+}
+function bossLoop(t){
+  if(!bossActive)return;
+  const sec=Math.max(0,Math.ceil((bossEnd-t)/1000));bossTimer.textContent=sec;
+  if(t>=bossEnd){bossActive=false;playBossFail();setTimeout(()=>endGame(false),450);return}
+  bossRaf=requestAnimationFrame(bossLoop);
+}
+function bossDefeated(){
+  bossActive=false;cancelAnimationFrame(bossRaf);
+  bossScreen.classList.add('boss-defeat');playBossDefeat();
+  setTimeout(()=>{
+    bossScreen.classList.remove('show','boss-defeat');
+    if(level>=100){endGame(true);return}
+    level++;
+    maxCell=boardSizeForLevel(level);expected=sequenceStart();buildBoard();updateHUD();prepareLevel();
+  },1250);
+}
+function playBossAppear(){tone(130,.28,.09,'sawtooth');tone(98,.4,.09,'square',.18);tone(65,.55,.1,'sawtooth',.42)}
+function playBossHit(){tone(180+Math.random()*90,.07,.045,'square')}
+function playBossDefeat(){[392,523,659,784,1046].forEach((f,i)=>tone(f,.22,.07,'triangle',i*.12))}
+function playBossFail(){[220,185,147,110].forEach((f,i)=>tone(f,.25,.06,'sawtooth',i*.14))}
+
+function endGame(won){running=false;bossActive=false;cancelAnimationFrame(raf);cancelAnimationFrame(bossRaf);bossScreen.classList.remove('show');flyers.forEach(f=>f.el.remove());flyers=[];$('#finalScore').textContent=score;$('#gameOverTitle').textContent=won?'🎓 ТИ ПРОЙШОВ 100 РІВНІВ!':'🔔 УРОК ЗАКІНЧЕНО';$('#nameInput').value='';$('#namedResult').textContent='';showScreen(gameOverScreen)}
+function saveName(){const name=$('#nameInput').value.trim()||'Гравець',row={name,score,level,date:new Date().toISOString()},arr=JSON.parse(localStorage.getItem('klasykyScores')||'[]');arr.push(row);arr.sort((a,b)=>b.score-a.score);arr.splice(10);localStorage.setItem('klasykyScores',JSON.stringify(arr));$('#namedResult').textContent=`${name}: ${score} балів • рівень ${Math.min(level,100)}`}
+function initAudio(){
+  if(audioCtx) return;
+  try{const AC=window.AudioContext||window.webkitAudioContext;audioCtx=new AC()}catch(e){}
+}
+function tone(freq,dur=.16,vol=.05,type='sine',when=0){
+  if(!audioCtx)return;
+  const now=audioCtx.currentTime+when,osc=audioCtx.createOscillator(),g=audioCtx.createGain();
+  osc.type=type;osc.frequency.setValueAtTime(freq,now);g.gain.setValueAtTime(.0001,now);
+  g.gain.exponentialRampToValueAtTime(vol,now+.015);g.gain.exponentialRampToValueAtTime(.0001,now+dur);
+  osc.connect(g);g.connect(audioCtx.destination);osc.start(now);osc.stop(now+dur+.03);
+}
+function playCountBeep(freq){tone(freq,.16,.07,'square')}
+function playSchoolBell(){
+  initAudio();if(!audioCtx)return;
+  if(audioCtx.state==='suspended')audioCtx.resume();
+  const seq=[1046,1318,1046,1568,1318];
+  seq.forEach((f,i)=>tone(f,.42,.11,'sine',i*.12));
+}
+function startMusic(){
+  initAudio();if(!audioCtx||musicTimer)return;
+  const melody=[523,659,784,659,587,698,880,698,523,659,784,988,880,784,659,587];
+  let i=0;
+  musicTimer=setInterval(()=>{
+    if(!musicOn||!audioCtx)return;
+    const f=melody[i++%melody.length];
+    tone(f,.19,.025,'triangle');
+    if(i%4===0)tone(f/2,.26,.014,'sine');
+  },280);
+}
+function toggleGraduation(){
+  const wrap=$('#ytWrap'), frame=$('#ytPlayer');
+  const showing=wrap.style.display!=='none';
+  if(!showing){
+    wrap.style.display='block';
+    gameArea.classList.add('youtube-open');
+    musicBtn.textContent='⏸ Вимкнути «Випускний»';
+    try{frame.contentWindow.postMessage(JSON.stringify({event:'command',func:'playVideo',args:[]}), '*')}catch(e){}
+  }else{
+    try{frame.contentWindow.postMessage(JSON.stringify({event:'command',func:'pauseVideo',args:[]}), '*')}catch(e){}
+    wrap.style.display='none';
+    gameArea.classList.remove('youtube-open');
+    musicBtn.textContent='🎵 Увімкнути «Випускний»';
+  }
+}
+function toggleMusic(){
+  musicOn=!musicOn;
+  musicBtn.textContent=musicOn?'🎵 Музика':'🔇 Без музики';
+  if(musicOn){initAudio();if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();startMusic()}
+}
+})();
+</script>
+</body>
+</html>
